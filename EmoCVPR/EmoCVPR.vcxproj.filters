@@ -24,6 +24,9 @@
     <ClCompile Include="utils.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="LightPrep.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="face_detection.h">
@@ -33,6 +36,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="utils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LightPrep.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

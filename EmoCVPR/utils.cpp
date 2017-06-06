@@ -4,6 +4,8 @@
 //********************************************
 
 #include "utils.h"
+#include "LightPrep.h"
+#include <opencv/cv.h>
 
 using namespace cv;
 using namespace std;
@@ -160,7 +162,16 @@ void getFiles(std::string path, std::vector<std::string>  &files) {
 				}
 			}
 			else {//判断后缀名是否为图片数据
-				files.push_back(s.assign(path).append("/").append(filefind.name));
+				string temp = filefind.name;
+				int pos = temp.find_last_of(".");
+				temp = temp.substr(pos, temp.size() - pos);
+				if (temp == ".tiff" || temp == ".bmp" || temp == ".png" || temp == "jpg"){
+					files.push_back(s.assign(path).append("/").append(filefind.name));
+				}
+				else{
+					;
+				}
+				
 			}
 		} while (_findnext(hfile, &filefind) == 0);
 	} _findclose(hfile);
@@ -189,17 +200,18 @@ void data_augmentation(Mat& img,FacePts& pts,vector<FacePts>&syntheticPts){
 	//九个点
 	vector<Point2f>Point2f_left;
 	vector<Point2f>Point2f_right;
-	int stide = 5;
-	for (int i = -stide; i <= stide; i += stide){
-		for (int j = -5; j <= stide; j += stide){
+	int stride = 5;
+	int augmentation_size = 7;
+	for (int i = -stride; i <= stride; i += stride){
+		for (int j = -stride; j <= stride; j += stride){
 			if ((i == 0 && j != 0))
 				continue;
 			Point2f_left.push_back(Point2f(left_center.x + i, left_center.y + j));
 			Point2f_right.push_back(Point2f(right_center.x + i, right_center.y + j));
 		}
 	}
-	for (int i = 0; i < 7;++i){
-		for (int j = 0; j < 7;++j){
+	for (int i = 0; i < augmentation_size; ++i){
+		for (int j = 0; j < augmentation_size; ++j){
 			FacePts temp = pts;
 			temp.x[0] = Point2f_left[i].x;
 			temp.y[0] = Point2f_left[i].y;
@@ -215,7 +227,7 @@ void data_augmentation(Mat& img,FacePts& pts,vector<FacePts>&syntheticPts){
 //***************************************************
 // Method: cnn训练样本准备的入口函数
 // FullName: train    
-// Returns: 
+// Returns:   
 // Parameter: 
 // Timer:2017.6.5
 // others : 做整体训练包括人脸检测，人脸区域crop，
@@ -226,13 +238,17 @@ void train(){
 	double threshold[3] = { 0.6, 0.7, 0.7 }; //rpo net对比
 	double factor = 0.709;//尺寸金字塔的缩放尺度
 	int minSize = 40;
-	string image_dir = "C:\\Users\\zf\\Desktop\\test";
+	string image_dir = "C:\\Users\\lk\\Desktop\\test1";
 	vector<string>files;
 	//获取当前目录下的所有文件
 	getFiles(image_dir, files);
+	CLightPrep* light = new CLightPrep;
+	light->Init(cvSize(norm_width, norm_height), true);
 	Mat img;
 	for (int i = 0; i < files.size(); ++i){
 		string path = files[i];
+		int pos = path.find_last_of(".");
+		string save_dir = path.substr(0, pos);
 		img = imread(path.c_str());
 		if (img.empty())
 			continue;
@@ -243,8 +259,7 @@ void train(){
 		setUpGausssian(7, 7, gauss_matrix);
 		for (int j = 0; j < faceInfos.size(); ++j){
 			vector<FacePts>syntheticPts;
-			syntheticPts.clear();
-			data_augmentation(img,faceInfos[i].facePts, syntheticPts);//样本扩增，扩增后的也需要进行放射变化，尺寸归一化和强度归一
+			data_augmentation(img, faceInfos[j].facePts, syntheticPts);//样本扩增，扩增后的也需要进行放射变化，尺寸归一化和强度归一
 			Mat warp_face = img.clone();
 			FacePts rotation_info;
 			//人脸矫正与crop
@@ -254,20 +269,26 @@ void train(){
 				Point2f center_point(rotation_info.x[0] + (rotation_info.x[1] - rotation_info.x[0]) / 2, rotation_info.y[0] + (rotation_info.y[1] - rotation_info.y[0]) / 2);
 				Rect roi(max<int>(0, center_point.x - crop_horizontal_left*distance), max<int>(0, center_point.y - crop_vertical_up*distance), min<int>(img.cols - max<int>(0, center_point.x - crop_horizontal_left*distance),(crop_horizontal_left + crop_horizontal_right)*distance), min<int>(img.rows-max<int>(0, center_point.y - crop_vertical_up*distance), (crop_vectical_down + crop_vertical_up)*distance));
 				Mat normImg = warp_face(roi).clone();
-				//imshow("src", normImg);
 				resize(normImg, normImg, cvSize(norm_width, norm_height));
-				//imshow("resize", normImg);
+				IplImage ResizeROi = normImg;
+				CvMat *temp = cvCreateMat(normImg.rows, normImg.cols,CV_8UC1);  //注意height和width的顺序  
+				cvConvert(&ResizeROi, temp);//深拷贝 
+				light->RunLightPrep(temp);
+				Mat tmp(temp);
+				imshow("dis", tmp);
+				//imshow("dis", normImg);
+				//GaussianBlur(normImg,normImg, Size(3,3), 0, 0);
+				//equalizeHist(normImg, normImg);
+				//imshow("final", normImg);
 				//Mat itennorm = normImg.clone();
 				//intensityNormalization(normImg, itennorm, gauss_matrix);
 				//imshow("dis", itennorm);
-				//waitKey(0);
+				waitKey(0);
+				string save_path = save_dir + "_" + to_string(k) + ".bmp";
+				imwrite(save_path, normImg);
 			}
-		
 		}
-
-	}
-
-	
+	}	
 }
 
 

@@ -100,12 +100,12 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>d:\software\caffe\caffe-master\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include;d:\software\caffe\caffe-master\3rdparty\Debug\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>e:\caffe\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include;e:\caffe\3rdparty\Debug\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>d:\software\caffe\caffe-master\Build\x64\Debug\;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64;d:\software\caffe\caffe-master\3rdparty\Debug\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>e:\caffe\Build\x64\Debug\;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64;e:\caffe\3rdparty\Debug\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_core2410d.lib;opencv_highgui2410d.lib;opencv_imgproc2410d.lib;opencv_objdetect2410d.lib;caffe.lib;libcaffe.lib;cudart.lib;cublas.lib;curand.lib;gflagsd.lib;libglog.lib;libopenblas.dll.a;libprotobuf.lib;hdf5.lib;hdf5_hl.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -140,24 +140,26 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>d:\software\caffe\caffe-master\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include;d:\software\caffe\caffe-master\3rdparty\Release\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>e:\caffe\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\include;e:\caffe\3rdparty\Release\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>d:\software\caffe\caffe-master\Build\x64\Release\;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64;d:\software\caffe\caffe-master\3rdparty\Release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>e:\caffe\Build\x64\Release\;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v7.5\lib\x64;e:\caffe\3rdparty\Release\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_core2410.lib;opencv_highgui2410.lib;opencv_imgproc2410.lib;opencv_objdetect2410.lib;caffe.lib;libcaffe.lib;cudart.lib;cublas.lib;curand.lib;gflags.lib;libglog.lib;libopenblas.dll.a;libprotobuf.lib;hdf5.lib;hdf5_hl.lib;Shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EmoRec.cpp" />
     <ClCompile Include="face_detection.cpp" />
+    <ClCompile Include="LightPrep.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="face_detection.h" />
+    <ClInclude Include="LightPrep.h" />
     <ClInclude Include="register.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
