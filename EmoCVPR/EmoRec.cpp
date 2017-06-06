@@ -2,16 +2,21 @@
 #include <iostream>
 #include "register.h"
 #include "face_detection.h"
+#include "utils.h"
 using namespace std;
 using namespace cv;
 
-string proto_model_dir = "../models/faceDet/";
+//string proto_model_dir = "../models/faceDet/";
 
 
 
 int main(){
 
-	MTCNN detector(proto_model_dir);//»À¡≥ºÏ≤‚model
+	train();
+
+
+
+	//MTCNN detector(proto_model_dir);//»À¡≥ºÏ≤‚model
 	
 
 
