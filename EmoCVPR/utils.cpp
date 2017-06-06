@@ -13,15 +13,15 @@ const float gauss_delta = 1;
 const int gauss_ave = 0;
 
 //mtcnn模型文件所在路径
-string proto_model_dir = "E:/programs/Lab/laboratory/FaceEmoCNN/models/faceDet";
+string proto_model_dir = "E:/laboratory/FaceEmoCNN/models/faceDet";
 
 // 对检测到人脸进行crop ，crop依据
 //矫正后的人眼中心到右眼中心的距离
 //distance = rightEye_center.x- eye_center.x
 const float crop_vertical_up = 1.3;
 const float crop_vectical_down = 3.2;
-const float crop_horizontal_left = 1.2;
-const float crop_horizontal_right = 1.2;
+const float crop_horizontal_left = 1.3;
+const float crop_horizontal_right = 1.3;
 const int landmark_points_nums = 5;
 
 
@@ -29,35 +29,31 @@ const int landmark_points_nums = 5;
 const int norm_width = 48;
 const int norm_height = 48;
 
+
 //**************************************************
-// Method: 人脸检测程序入口
-// FullName: faceDetect    
-// Returns: 
+// Method: 建立高斯核
+// FullName: setUpGausssian    
+// Returns: 高斯核宽度，高度和保存的高斯核模板参数
 // Parameter: 输入图片
 // Timer:2017.6.5
 // others : 仿射变换后的图像与输入图像大小相同,5点检测
-//***************************************************
-void faceDetect(Mat& img){
-
-}
-
 void setUpGausssian(int kernel_height, int kernel_width, vector<vector<float>>& gauss_matrix){
 	float temp_val = 1 / (2.0*CV_PI*gauss_delta*gauss_delta);
 	gauss_matrix.resize(kernel_height);
 	for (int i = 0; i < kernel_height; i++){
 		gauss_matrix[i].resize(kernel_width);
 		for (int j = 0; j < kernel_width; ++j){
-			gauss_matrix[i][j] = temp_val*exp(-(pow(i - kernel_height / 2, 2) + pow(j - kernel_width / 2, 2)));
+			gauss_matrix[i][j] = temp_val*exp(-(pow(i - kernel_height / 2, 2) + pow(j - kernel_width / 2, 2))/(2*gauss_delta*gauss_delta));
 		}
 	}
 }
 
 
 //**************************************************
-// Method: 
-// FullName: faceDetect    
+// Method: 图像强度归一化处理
+// FullName: intensityNormalization    
 // Returns: 
-// Parameter: 输入图片
+// Parameter: 输入图像，归一化图像，高斯核
 // Timer:2017.6.5
 // others : 仿射变换后的图像与输入图像大小相同,5点检测
 //***************************************************
@@ -170,17 +166,48 @@ void getFiles(std::string path, std::vector<std::string>  &files) {
 	} _findclose(hfile);
 }
 
+/*
+#define GAUSSFUN(i,j,gauss_data,&y){ \
+	float temp_val = 1 / (2.0*CV_PI*gauss_data*gauss_data); \
+	float y = temp_val*exp(-(pow(i, 2) + pow(j, 2))/(2*gauss_data*gauss_data));\
+}while (0)
+*/
+
 //***************************************************
 // Method: 训练样本扩增
 // FullName: data_augmentation    
 // Returns: 
-// Parameter: 输入图像，输入特征点坐标，扩增后的样本集
+// Parameter: 输入图像，输入特征点坐标，扩增后的样本集,扩增后的五点坐标
 // Timer:2017.6.5
 // others : 通过改变人脸眼球的位置，对图像进行样本扩增，样本
-//			扩增的倍数位70倍，左右各选30个点
+//			扩增的倍数位49倍，左右各选7个点
 //*****************************************************
-void data_augmentation(Mat &face, FacePts& pts, vector<Mat>& SyntheticImg){
-
+void data_augmentation(Mat& img,FacePts& pts,vector<FacePts>&syntheticPts){
+	//左右眼坐标
+	Point2f left_center(pts.x[0],pts.y[0]);
+	Point2f right_center(pts.x[1], pts.y[1]);
+	//九个点
+	vector<Point2f>Point2f_left;
+	vector<Point2f>Point2f_right;
+	int stide = 5;
+	for (int i = -stide; i <= stide; i += stide){
+		for (int j = -5; j <= stide; j += stide){
+			if ((i == 0 && j != 0))
+				continue;
+			Point2f_left.push_back(Point2f(left_center.x + i, left_center.y + j));
+			Point2f_right.push_back(Point2f(right_center.x + i, right_center.y + j));
+		}
+	}
+	for (int i = 0; i < 7;++i){
+		for (int j = 0; j < 7;++j){
+			FacePts temp = pts;
+			temp.x[0] = Point2f_left[i].x;
+			temp.y[0] = Point2f_left[i].y;
+			temp.x[1] = Point2f_right[j].x;
+			temp.y[1] = Point2f_right[j].y;
+			syntheticPts.push_back(temp);
+		}
+	}
 }
 
 
@@ -199,7 +226,7 @@ void train(){
 	double threshold[3] = { 0.6, 0.7, 0.7 }; //rpo net对比
 	double factor = 0.709;//尺寸金字塔的缩放尺度
 	int minSize = 40;
-	string image_dir = "C:\\Users\\lk\\Desktop\\test";
+	string image_dir = "C:\\Users\\zf\\Desktop\\test";
 	vector<string>files;
 	//获取当前目录下的所有文件
 	getFiles(image_dir, files);
@@ -215,21 +242,27 @@ void train(){
 		vector<vector<float>>gauss_matrix;
 		setUpGausssian(7, 7, gauss_matrix);
 		for (int j = 0; j < faceInfos.size(); ++j){
+			vector<FacePts>syntheticPts;
+			syntheticPts.clear();
+			data_augmentation(img,faceInfos[i].facePts, syntheticPts);//样本扩增，扩增后的也需要进行放射变化，尺寸归一化和强度归一
 			Mat warp_face = img.clone();
 			FacePts rotation_info;
 			//人脸矫正与crop
-			warpFace(img, warp_face, faceInfos[i].facePts, rotation_info);
-			int distance = 0.5*(rotation_info.x[1]-rotation_info.x[0]);//右眼与中心眼睛距离
-			Point2f center_point(rotation_info.x[0] + (rotation_info.x[1] - rotation_info.x[0]) / 2, rotation_info.y[0] + (rotation_info.y[1] - rotation_info.y[0]) / 2);
-			Rect roi(center_point.x - crop_horizontal_left*distance, center_point.y - crop_vertical_up*distance, (crop_horizontal_left+crop_horizontal_right)*distance,(crop_vectical_down+crop_vertical_up)*distance);
-			Mat normImg = warp_face(roi).clone();
-			imshow("src",normImg);
-			resize(normImg, normImg, cvSize(norm_width,norm_height));
-			imshow("resize", normImg);
-			Mat itennorm = normImg.clone();
-			intensityNormalization(normImg, itennorm, gauss_matrix);
-			imshow("dis", itennorm);
-			waitKey(0);
+			for (int k = 0; k < syntheticPts.size();++k){
+				warpFace(img, warp_face, syntheticPts[k], rotation_info);
+				int distance = 0.5*(rotation_info.x[1] - rotation_info.x[0]);//右眼与中心眼睛距离
+				Point2f center_point(rotation_info.x[0] + (rotation_info.x[1] - rotation_info.x[0]) / 2, rotation_info.y[0] + (rotation_info.y[1] - rotation_info.y[0]) / 2);
+				Rect roi(max<int>(0, center_point.x - crop_horizontal_left*distance), max<int>(0, center_point.y - crop_vertical_up*distance), min<int>(img.cols - max<int>(0, center_point.x - crop_horizontal_left*distance),(crop_horizontal_left + crop_horizontal_right)*distance), min<int>(img.rows-max<int>(0, center_point.y - crop_vertical_up*distance), (crop_vectical_down + crop_vertical_up)*distance));
+				Mat normImg = warp_face(roi).clone();
+				//imshow("src", normImg);
+				resize(normImg, normImg, cvSize(norm_width, norm_height));
+				//imshow("resize", normImg);
+				//Mat itennorm = normImg.clone();
+				//intensityNormalization(normImg, itennorm, gauss_matrix);
+				//imshow("dis", itennorm);
+				//waitKey(0);
+			}
+		
 		}
 
 	}
